@@ -45,7 +45,7 @@ if os.path.exists('logs') == False:
 if os.path.exists('checkpoints') == False:
     os.mkdir("checkpoints")
 
-criterion = CrossEntropyLabelSmooth(num_classes=data_object.num_classes , args.label_smoothing)
+criterion = CrossEntropyLabelSmooth(data_object.num_classes , args.label_smoothing)
 
 
 optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.decay)
