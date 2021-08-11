@@ -14,6 +14,9 @@ from models import get_model
 seed_everything(43)
 
 
+if os.path.exists('data_splits') == False:
+    os.mkdir("data_splits")
+
 ap = argparse.ArgumentParser(description='pretraining')
 ap.add_argument('dataset', choices=['c10', 'c100', 'tin','svhn'], type=str, help='Dataset choice')
 ap.add_argument('model', type=str, help='Model choice')
