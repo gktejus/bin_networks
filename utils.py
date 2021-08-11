@@ -29,11 +29,7 @@ class CrossEntropyLabelSmooth(nn.Module):
     loss = (-targets * log_probs).mean(0).sum()
     return loss
 
-<<<<<<< HEAD
 def adjust_learning_rate(optimizer, epoch, args):
-=======
-    def adjust_learning_rate(optimizer, epoch, args):
->>>>>>> f43c7ec87c42f076c98915f161b1317c36d030d8
     """Sets the learning rate to the initial LR decayed by 2 every 30 epochs"""
     if args.scheduler_type==1:
         lr = args.lr * (0.5 ** (epoch // 30))
