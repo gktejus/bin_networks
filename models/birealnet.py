@@ -3,9 +3,7 @@ import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 import torch.nn.functional as F
 
-
 __all__ = ['birealnet18', 'birealnet34']
-
 
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
@@ -23,8 +21,6 @@ class BinaryActivation(nn.Module):
 
     def forward(self, x):
         out_forward = torch.sign(x)
-        #out_e1 = (x^2 + 2*x)
-        #out_e2 = (-x^2 + 2*x)
         out_e_total = 0
         mask1 = x < -1
         mask2 = x < 0
@@ -49,14 +45,11 @@ class HardBinaryConv(nn.Module):
     def forward(self, x):
         real_weights = self.weights.view(self.shape)
         scaling_factor = torch.mean(torch.mean(torch.mean(abs(real_weights),dim=3,keepdim=True),dim=2,keepdim=True),dim=1,keepdim=True)
-        #print(scaling_factor, flush=True)
         scaling_factor = scaling_factor.detach()
         binary_weights_no_grad = scaling_factor * torch.sign(real_weights)
         cliped_weights = torch.clamp(real_weights, -1.0, 1.0)
         binary_weights = binary_weights_no_grad.detach() - cliped_weights.detach() + cliped_weights
-        #print(binary_weights, flush=True)
         y = F.conv2d(x, binary_weights, stride=self.stride, padding=self.padding)
-
         return y
 
 class BasicBlock(nn.Module):
@@ -68,13 +61,12 @@ class BasicBlock(nn.Module):
         self.binary_activation = BinaryActivation()
         self.binary_conv = HardBinaryConv(inplanes, planes, stride=stride)
         self.bn1 = nn.BatchNorm2d(planes)
-
+        self.relu = nn.ReLU()
         self.downsample = downsample
         self.stride = stride
 
     def forward(self, x):
         residual = x
-
         out = self.binary_activation(x)
         out = self.binary_conv(out)
         out = self.bn1(out)
@@ -84,14 +76,14 @@ class BasicBlock(nn.Module):
 
         out += residual
 
-        return out
+        return (out)
 
 class BiRealNet(nn.Module):
 
-    def __init__(self, block, layers, num_classes=1000, zero_init_residual=False):
+    def __init__(self, block, layers, num_classes=100, zero_init_residual=False):
         super(BiRealNet, self).__init__()
         self.inplanes = 64
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=2, padding=3,
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1,
                                bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -123,7 +115,7 @@ class BiRealNet(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.maxpool(x)
-
+        
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
