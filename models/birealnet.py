@@ -128,9 +128,9 @@ class BiRealNet(nn.Module):
         return x
 
 
-def birealnet18(pretrained=False, **kwargs):
+def birealnet18(num_classes , pretrained=False, **kwargs):
     """Constructs a BiRealNet-18 model. """
-    model = BiRealNet(BasicBlock, [4, 4, 4, 4], **kwargs)
+    model = BiRealNet(BasicBlock, [4, 4, 4, 4],num_classes, **kwargs)
     return model
 
 
