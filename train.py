@@ -48,7 +48,20 @@ if os.path.exists('logs') == False:
 if os.path.exists('checkpoints') == False:
     os.mkdir("checkpoints")
 
-criterion = CrossEntropyLabelSmooth(data_object.num_classes , args.label_smoothing)
+CE = nn.CrossEntropyLoss()
+def criterion_test(y_pred, y_true):
+    ce_loss = CE(y_pred, y_true)
+    return ce_loss
+
+if args.label_smoothing>0:
+    CE_smooth = CrossEntropyLabelSmooth(data_object.num_classes , args.label_smoothing)
+    def criterion_train(y_pred, y_true):
+        ce_loss = CE_smooth(y_pred, y_true)
+        return ce_loss
+else:
+    def criterion_train(model, y_pred, y_true):
+        ce_loss = CE(y_pred, y_true)
+        return ce_loss
 
 
 optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.decay)
@@ -107,12 +120,16 @@ num_epochs = args.epochs
 train_losses = []
 valid_losses = []
 valid_accuracy = []
+name = f'{args.model}_{args.dataset}'
+if args.label_smoothing>0:
+    name += '_label_smoothing' 
+
 if args.test_only == False:
     for epoch in range(num_epochs):
         adjust_learning_rate(optimizer, epoch, args)
         print('Starting epoch %d / %d' % (epoch + 1, num_epochs))
-        t_loss = train(model, criterion, optimizer)
-        acc, v_loss = test(model, criterion, optimizer, "val")
+        t_loss = train(model, criterion_train, optimizer)
+        acc, v_loss = test(model, criterion_test, optimizer, "val")
 
         if acc>best_acc:
             print("**Saving model**")
@@ -121,16 +138,16 @@ if args.test_only == False:
                 "epoch": epoch + 1,
                 "state_dict" : model.state_dict(),
                 "acc" : best_acc,
-            }, f"checkpoints/{args.model}_{args.dataset}_pretrained.pth")
+            }, f"checkpoints/{name}.pth")
 
         train_losses.append(t_loss)
         valid_losses.append(v_loss)
         valid_accuracy.append(acc)
         df_data=np.array([train_losses, valid_losses, valid_accuracy]).T
         df = pd.DataFrame(df_data, columns = ['train_losses','valid_losses','valid_accuracy'])
-        df.to_csv(f'logs/{args.model}_{args.dataset}_pretrained.csv')
+        df.to_csv(f"logs/{name}.csv")
 
-state = torch.load(f"checkpoints/{args.model}_{args.dataset}_pretrained.pth")
+state = torch.load(f"checkpoints/{name}.pth")
 model.load_state_dict(state['state_dict'],strict=True)
 acc, v_loss = test(model, criterion, optimizer, "test")
 print(f"Test Accuracy: {acc} | Valid Accuracy: {state['acc']}")
