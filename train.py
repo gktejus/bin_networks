@@ -59,7 +59,7 @@ if args.label_smoothing>0:
         ce_loss = CE_smooth(y_pred, y_true)
         return ce_loss
 else:
-    def criterion_train(model, y_pred, y_true):
+    def criterion_train(y_pred, y_true):
         ce_loss = CE(y_pred, y_true)
         return ce_loss
 
@@ -149,5 +149,5 @@ if args.test_only == False:
 
 state = torch.load(f"checkpoints/{name}.pth")
 model.load_state_dict(state['state_dict'],strict=True)
-acc, v_loss = test(model, criterion, optimizer, "test")
+acc, v_loss = test(model, criterion_test, optimizer, "test")
 print(f"Test Accuracy: {acc} | Valid Accuracy: {state['acc']}")
