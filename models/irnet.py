@@ -68,10 +68,17 @@ class BasicBlock(nn.Module):
             )
 
     def forward(self, x):
-        out = F.hardtanh(self.bn1(self.conv1(x)))
-        out = self.bn2(self.conv2(out))
-        out += self.shortcut(x)
+        residual = x 
+        out = self.conv1(x)
+        out = self.bn1(x)
+        out+= self.shortcut(residual)
         out = F.hardtanh(out)
+        residual = out
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out+=residual
+        out = F.hardtanh(out)
+       
         return out
 
 
