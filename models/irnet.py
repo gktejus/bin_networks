@@ -120,7 +120,7 @@ class ResNet(nn.Module):
         out = self.layer4(out)
         out = self.avgpool(out)
         out = out.view(out.size(0), -1)
-#         out = self.bn2(out)
+        out = self.bn2(out)
         out = self.linear(out)
         # out = self.softmax(out)
         return out 
